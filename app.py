@@ -52,12 +52,20 @@ def product_to_pack(length, width, height, fragility, channel, include_dunnage):
         result["Dunnage Type"] = "Not included"
         result["Dunnage Dimensions"] = "N/A"
 
-    return result
+    return result, style
 
 # Action
 if st.button("Generate Recommendation", key="generate_btn"):
-    result = product_to_pack(length, width, height, fragility, channel, include_dunnage)
+    result, style = product_to_pack(length, width, height, fragility, channel, include_dunnage)
     st.markdown("---")
     st.success("✅ Packaging Recommendation Generated!")
+    
     for k, v in result.items():
         st.write(f"**{k}:** {v}")
+
+    # Image preview
+    st.subheader("📦 Box Style Preview")
+    if style == "Mailer Box (Roll-End Tuck Top)":
+        st.image("https://i.imgur.com/EVuwgKF.png", caption="Mailer Box (RETT)", use_column_width=True)
+    elif style == "Regular Slotted Container (RSC)":
+        st.image("https://i.imgur.com/nz3S45b.png", caption="RSC Box", use_column_width=True)
