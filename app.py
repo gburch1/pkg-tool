@@ -26,11 +26,11 @@ st.set_page_config(page_title="AI Packaging Generator")
 st.title("📦 AI Packaging Generator")
 st.write("Enter your product specs to receive a packaging recommendation.")
 
-length = st.number_input("Product Length (in)", min_value=0.0, value=6.0)
-width = st.number_input("Product Width (in)", min_value=0.0, value=4.0)
-height = st.number_input("Product Height (in)", min_value=0.0, value=3.0)
-fragility = st.selectbox("Fragility Level", ["low", "medium", "high"])
-channel = st.selectbox("Sales Channel", ["e-commerce", "retail"])
+length = st.number_input("Product Length (in)", min_value=0.0, value=6.0, key="length")
+width = st.number_input("Product Width (in)", min_value=0.0, value=4.0, key="width")
+height = st.number_input("Product Height (in)", min_value=0.0, value=3.0, key="height")
+fragility = st.selectbox("Fragility Level", ["low", "medium", "high"], key="fragility")
+channel = st.selectbox("Sales Channel", ["e-commerce", "retail"], key="channel")
 
 if st.button("Generate Recommendation"):
     result = product_to_pack(length, width, height, fragility, channel)
