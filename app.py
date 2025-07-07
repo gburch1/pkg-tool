@@ -1,7 +1,6 @@
 import streamlit as st
 
 st.set_page_config(page_title="AI Packaging Generator", layout="centered")
-
 st.title("📦 AI Packaging Generator")
 st.subheader("Enter your product specs to receive a packaging recommendation.")
 
@@ -15,7 +14,9 @@ include_dunnage = st.checkbox("Include Dunnage Recommendation", key="dunnage")
 
 # Logic
 def product_to_pack(length, width, height, fragility, channel, include_dunnage):
-    padding = {"low": 0.25, "medium": 0.5, "high": 0.75}[fragility]
+    padding_lookup = {"low": 0.25, "medium": 0.5, "high": 0.75}
+    padding = padding_lookup[fragility]
+    
     box_l = length + 2 * padding
     box_w = width + 2 * padding
     box_h = height + 2 * padding
@@ -28,23 +29,30 @@ def product_to_pack(length, width, height, fragility, channel, include_dunnage):
     )
     eco_score = "🌿 High" if material == "Kraft chipboard" else "♻️ Medium"
 
-    # Dunnage logic
-    dunnage = None
-    if include_dunnage:
-        if fragility == "high":
-            dunnage = "Foam inserts or air pillows"
-        elif fragility == "medium":
-            dunnage = "Paper fill or molded pulp"
-        else:
-            dunnage = "Kraft paper or bubble wrap"
-
-    return {
+    result = {
         "Box Style": style,
         "Material": material,
         "Box Dimensions (in)": f"{round(box_l, 2)} x {round(box_w, 2)} x {round(box_h, 2)}",
-        "Eco Score": eco_score,
-        "Dunnage Recommendation": dunnage if include_dunnage else "Not included"
+        "Eco Score": eco_score
     }
+
+    if include_dunnage:
+        if fragility == "high":
+            dunnage_type = "Foam inserts or air pillows"
+        elif fragility == "medium":
+            dunnage_type = "Paper fill or molded pulp"
+        else:
+            dunnage_type = "Kraft paper or bubble wrap"
+        
+        result["Dunnage Type"] = dunnage_type
+        result["Dunnage Dimensions"] = (
+            f"Top & Bottom Pads: {round(length + padding, 2)}\" x {round(width + padding, 2)}\" x {round(padding, 2)}\""
+        )
+    else:
+        result["Dunnage Type"] = "Not included"
+        result["Dunnage Dimensions"] = "N/A"
+
+    return result
 
 # Action
 if st.button("Generate Recommendation", key="generate_btn"):
