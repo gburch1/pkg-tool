@@ -1,56 +1,71 @@
 import streamlit as st
 
-# Title and instructions
-st.title("📦 AI-Powered Packaging Generator")
+st.set_page_config(page_title="AI Packaging Generator", layout="centered")
+st.title("📦 AI Packaging Generator")
 st.subheader("Enter your product specs to receive a packaging recommendation.")
 
-# --- PRODUCT DIMENSIONS ---
-st.header("📐 Product Dimensions")
-length = st.number_input("Product Length (in)", min_value=0.0, value=6.0, key="prod_len")
-width = st.number_input("Product Width (in)", min_value=0.0, value=4.0, key="prod_wid")
-height = st.number_input("Product Height (in)", min_value=0.0, value=2.0, key="prod_hei")
+# Inputs
+length = st.number_input("Product Length (in)", min_value=0.0, value=6.0, key="length")
+width = st.number_input("Product Width (in)", min_value=0.0, value=4.0, key="width")
+height = st.number_input("Product Height (in)", min_value=0.0, value=3.0, key="height")
+fragility = st.selectbox("Fragility Level", ["low", "medium", "high"], key="fragility")
+channel = st.selectbox("Sales Channel", ["e-commerce", "retail"], key="channel")
+include_dunnage = st.checkbox("Include Dunnage Recommendation", key="dunnage")
 
-# --- PACKAGING STYLE SELECTION ---
-st.header("📦 Packaging Style")
-box_style = st.selectbox("Choose a box style", ["Mailer (RETT)", "RSC Box"], key="box_style")
+# Logic
+def product_to_pack(length, width, height, fragility, channel, include_dunnage):
+    padding_lookup = {"low": 0.25, "medium": 0.5, "high": 0.75}
+    padding = padding_lookup[fragility]
+    
+    box_l = length + 2 * padding
+    box_w = width + 2 * padding
+    box_h = height + 2 * padding
 
-# --- DUNNAGE OPTION ---
-st.header("🧊 Dunnage Options")
-use_dunnage = st.checkbox("Include dunnage (padding)?", key="dunnage")
-
-if use_dunnage:
-    dunnage_top = st.number_input("Top/Bottom Padding (in)", min_value=0.0, value=0.25, key="dun_top")
-    dunnage_sides = st.number_input("Side Padding (in)", min_value=0.0, value=0.25, key="dun_side")
-else:
-    dunnage_top = 0
-    dunnage_sides = 0
-
-# --- CALCULATE BOX DIMENSIONS ---
-st.header("📦 Recommended Box Dimensions")
-
-box_length = length + (2 * dunnage_sides)
-box_width = width + (2 * dunnage_sides)
-box_height = height + (2 * dunnage_top)
-
-st.markdown(f"**Box Size:** `{round(box_length, 2)} in x {round(box_width, 2)} in x {round(box_height, 2)} in`")
-
-# --- PREVIEW BOX STYLE IMAGE ---
-st.header("🖼️ Box Style Preview")
-
-if box_style == "Mailer (RETT)":
-    st.image(
-        "https://raw.githubusercontent.com/openpackaging/ai-box-images/main/mailer-box.png",
-        caption="Mailer Box (RETT)",
-        use_container_width=True
+    style = "Mailer Box (Roll-End Tuck Top)" if channel == "e-commerce" else "Regular Slotted Container (RSC)"
+    material = (
+        "Double-wall corrugated" if fragility == "high"
+        else "32 ECT single-wall" if fragility == "medium"
+        else "Kraft chipboard"
     )
-else:
-    st.image(
-        "https://raw.githubusercontent.com/openpackaging/ai-box-images/main/rsc-box.png",
-        caption="RSC Box",
-        use_container_width=True
-    )
+    eco_score = "🌿 High" if material == "Kraft chipboard" else "♻️ Medium"
 
-# --- FOOTER ---
-st.markdown("---")
-st.markdown("🔁 Adjust dimensions to explore different packaging fits. More features coming soon!")
+    result = {
+        "Box Style": style,
+        "Material": material,
+        "Box Dimensions (in)": f"{round(box_l, 2)} x {round(box_w, 2)} x {round(box_h, 2)}",
+        "Eco Score": eco_score
+    }
 
+    if include_dunnage:
+        if fragility == "high":
+            dunnage_type = "Foam inserts or air pillows"
+        elif fragility == "medium":
+            dunnage_type = "Paper fill or molded pulp"
+        else:
+            dunnage_type = "Kraft paper or bubble wrap"
+        
+        result["Dunnage Type"] = dunnage_type
+        result["Dunnage Dimensions"] = (
+            f"Top & Bottom Pads: {round(length + padding, 2)}\" x {round(width + padding, 2)}\" x {round(padding, 2)}\""
+        )
+    else:
+        result["Dunnage Type"] = "Not included"
+        result["Dunnage Dimensions"] = "N/A"
+
+    return result, style
+
+# Action
+if st.button("Generate Recommendation", key="generate_btn"):
+    result, style = product_to_pack(length, width, height, fragility, channel, include_dunnage)
+    st.markdown("---")
+    st.success("✅ Packaging Recommendation Generated!")
+    
+    for k, v in result.items():
+        st.write(f"**{k}:** {v}")
+
+    # Image preview
+    st.subheader("📦 Box Style Preview")
+    if style == "Mailer Box (Roll-End Tuck Top)":
+        st.image("https://i.imgur.com/EVuwgKF.png", caption="Mailer Box (RETT)", use_column_width=True)
+    elif style == "Regular Slotted Container (RSC)":
+        st.image("https://i.imgur.com/nz3S45b.png", caption="RSC Box", use_column_width=True)
